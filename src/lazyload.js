@@ -6,6 +6,7 @@ LazyLoad = function (instanceSettings) {
 
 	var _defaultSettings = {
 			elements_selector: "img",
+			background_image: false,
 			container: window,
 			threshold: 300,
 			throttle: 40,
@@ -179,9 +180,16 @@ LazyLoad = function (instanceSettings) {
 		element.className = element.className.replace(new RegExp("(^|\\s+)" + className + "(\\s+|$)"), ' ').replace(/^\s+/, '').replace(/\s+$/, '');
 	}
 
-	function _setSrcAndSrcset(target, source, srcsetDataAttribute, srcDataAttribute) {
+	function _setSrcAndSrcset(target, source, srcsetDataAttribute, srcDataAttribute, setImage) {
 		var srcSet = source.getAttribute( 'data-' + srcsetDataAttribute),
 			src = source.getAttribute( 'data-' + srcDataAttribute);
+
+		// add background image if set in settings
+		if(typeof setImage != 'undefined' && instanceSettings.background_image){
+			target.style.backgroundImage = 'url('+ src +')';
+			target.removeAttribute('data-' + srcDataAttribute);
+			return;
+		}
 		if (srcSet) {
 			target.setAttribute("srcset", srcSet);
 		}
@@ -226,8 +234,9 @@ LazyLoad = function (instanceSettings) {
 		var fakeImg,
 			settings = this._settings;
 
-		/* If no src attribute given use data:uri. */
-		if (!element.getAttribute("src")) {
+		if(settings.background_image){
+			element.style.backgroundImage = 'url('+ settings.placeholder +')'; /* Set as background image */
+		} else if (!element.getAttribute("src")) { /* If no src attribute given use data:uri. */
 			element.setAttribute("src", settings.placeholder);
 		}
 		/* Creating a new `img` in a DOM fragment. */
@@ -240,7 +249,7 @@ LazyLoad = function (instanceSettings) {
 			if (settings.callback_load) {
 				settings.callback_load(element);
 			}
-			_setSrcAndSrcset(element, element, settings.data_srcset, settings.data_src);
+			_setSrcAndSrcset(element, element, settings.data_srcset, settings.data_src, true);
 			/* Calling SET callback */
 			if (settings.callback_set) {
 				settings.callback_set(element);
@@ -365,7 +374,6 @@ LazyLoad = function (instanceSettings) {
 	};
 
 	this.destroy = function () {
-        _removeEventListener(window, "resize", this._loopThroughElements.bind(this));
 		this._stopScrollHandler();
 		this._elements = null;
 		this._queryOriginNode = null;
@@ -379,7 +387,6 @@ LazyLoad = function (instanceSettings) {
 
 	this._settings = _merge_objects(_defaultSettings, instanceSettings);
 	this._queryOriginNode = this._settings.container === window ? document : this._settings.container;
-	_addEventListener(window, "resize", this._loopThroughElements.bind(this));
-    this.update();
+	this.update();
 
 };
