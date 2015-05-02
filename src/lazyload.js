@@ -16,6 +16,7 @@ LazyLoad = function (instanceSettings) {
 			class_loaded: "loaded",
 			skip_invisible: true,
 			show_while_loading: false,
+			callback_pause: null,
 			callback_load: null,
 			callback_set: null,
 			callback_processed: null,
@@ -289,11 +290,16 @@ LazyLoad = function (instanceSettings) {
 	};
 
 	this._loopThroughElements = function () {
-		var i, element,
+		var i, element, pause = false,
 			settings = this._settings,
 			elements = this._elements,
 			elementsLength = elements.length,
 			processedIndexes = [];
+
+		// if callback_pause exists and if it returns false it will skip looping through elements
+		if(settings.callback_pause && settings.callback_pause()){
+			return;
+		}
 
 		for (i = 0; i < elementsLength; i++) {
 			element = elements[i];
